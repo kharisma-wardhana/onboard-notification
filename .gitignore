@@ -1,0 +1,4 @@
+config/*
+data/*
+notification/node_modules/*
+onboarding/node_modules/*

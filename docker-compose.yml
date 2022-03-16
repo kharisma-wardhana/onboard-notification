@@ -1,0 +1,90 @@
+version: '3.8'
+services:
+  onboarding:
+    build:
+      context: ./onboarding
+    container_name: onboarding
+    depends_on:
+      - db
+    command: npm run start-dev
+    ports:
+      - "${ONBOARDING_PORT:-5000}:3000"
+    volumes:
+      - "${ONBOARDING_DATA:-./onboarding}:/usr/src/app"
+    networks:
+      - test-net
+
+  notification:
+    build:
+      context: ./notification
+    container_name: notification
+    command: npm run start-dev
+    ports:
+      - "${NOTIFICATION_PORT:-5001}:3000"
+    volumes:
+      - "${NOTIFICATION_DATA:-./notification}:/usr/src/app"
+    networks:
+      - test-net
+
+  db:
+    container_name: postgresql
+    image: postgres
+    environment:
+      POSTGRES_USER: "${PGUSER:-root}"
+      POSTGRES_PASSWORD: "${PGPASSWORD:-root}"
+      POSTGRES_DB: "${PGDATABASE:-postgres}"
+    ports:
+      - "${PGPORT:-5432}:5432"
+    volumes:
+      - "${PGDATA:-./data/pgdata}:/var/lib/postgresql/data"
+    networks:
+      - test-net
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_INITDB_ROOT_USERNAME:-root}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD:-root}"
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - "${MONGO_DATA:-./data/mongodb}:/data/db"
+    networks:
+      - test-net
+
+  rabbitmq:
+    container_name: broker
+    image: rabbitmq:3.9.11-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER:-guest}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS:-guest}"
+      RABBITMQ_DEFAULT_VHOST: "${RABBITMQ_DEFAULT_VHOST:-/}"
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_UIPORT:-15672}:15672"
+    volumes:
+      - "${RABBITMQ_DATA:-./data/rabbitmq}:/var/lib/rabbitmq"
+    networks:
+      - test-net
+
+  mailtrap:
+    container_name: mailtrap
+    image: dbck/mailtrap
+    environment:
+      MAILTRAP_USER: mailtrap
+      MAILTRAP_PASS: mailtrap
+      TZ: Asia/Jakarta
+    ports:
+      - "${MAILTRAP_HTTP_PORT:-9080}:80"
+      - "${MAILTRAP_SMTP_TSL:-9025}:25"
+      - "${MAILTRAP_SMTP_SSL:-9465}:465"
+      - "${MAILTRAP_IMAP_TSL:-9143}:143"
+      - "${MAILTRAP_IMAP_SSL:-9993}:993"
+      - "${MAILTRAP_SUBMISSION_TLS:-9587}:587"
+    networks:
+      - test-net
+
+networks:
+  test-net:
+    driver: bridge
